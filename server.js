@@ -44,7 +44,7 @@ app.use(cookieParser());
 app.use("/uploads", express.static("uploads"));
 
 app.use(cors({
-    origin: ["http://127.0.0.1:5500", "http://localhost:5500"],
+    origin: ["http://127.0.0.1:5500", "http://localhost:5500", "https://d3so7a65.github.io"],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
