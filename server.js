@@ -128,10 +128,22 @@ app.post('/register', async (req, res) => {
         });
 
         const { password: _, ...userWithoutPassword } = user;
-        res.json({ message: "Регистрация успешна", user: userWithoutPassword });
+        
+        const token = jwt.sign(
+            { userId: user.id, email: user.email, name: user.name },
+            JWT_SECRET,
+            { expiresIn: "7d" }
+        );
+        
+        res.json({ 
+            message: "Регистрация успешна", 
+            user: userWithoutPassword,
+            token: token 
+        });
+        
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Ошибка сервера" });
+        console.error(error);
+        res.status(500).json({ message: "Ошибка сервера: " + error.message });
     }
 });
 
@@ -204,7 +216,7 @@ app.post('/send-recovery-code', async (req, res) => {
         });
         
         if (!user) {
-            return res.status(404).json({ message: 'Пользователь с таким email не найден' });
+            return res.status(404).json({ message: 'Пользователь не найден' });
         }
         
         const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -217,21 +229,13 @@ app.post('/send-recovery-code', async (req, res) => {
             }
         });
         
-        try {
-            await transporter.sendMail({
-                from: 'rickid812@gmail.com',
-                to: email,
-                subject: 'Восстановление пароля - Shopify Game',
-                html: `<h2>Ваш код подтверждения: <strong>${code}</strong></h2><p>Код действителен 10 минут.</p>`
-            });
-            res.json({ message: 'Код отправлен на почту', code: code });
-        } catch (emailError) {
-            console.error('Ошибка отправки email:', emailError);
-            res.json({ message: 'Код создан (письмо не отправлено)', code: code, debug: true });
-        }
+        // Отключаем отправку email для теста
+        console.log(`🔐 Код для ${email}: ${code}`);
+        
+        res.json({ message: 'Код отправлен (проверьте консоль сервера)', code: code });
         
     } catch (error) {
-        console.error('Ошибка в send-recovery-code:', error);
+        console.error(error);
         res.status(500).json({ message: 'Ошибка сервера: ' + error.message });
     }
 });
@@ -259,21 +263,12 @@ app.post('/reset-password', async (req, res) => {
             }
         });
         
-        try {
-            await transporter.sendMail({
-                from: 'rickid812@gmail.com',
-                to: email,
-                subject: 'Пароль изменён - Shopify Game',
-                html: `<h2>Ваш пароль успешно изменён!</h2><p>Теперь вы можете войти с новым паролем.</p>`
-            });
-        } catch (emailError) {
-            console.error('Ошибка отправки email уведомления:', emailError);
-        }
+        console.log(`✅ Пароль изменён для: ${email}`);
         
         res.json({ message: 'Пароль успешно изменён' });
         
     } catch (error) {
-        console.error('Ошибка в reset-password:', error);
+        console.error(error);
         res.status(500).json({ message: 'Ошибка сервера: ' + error.message });
     }
 });
