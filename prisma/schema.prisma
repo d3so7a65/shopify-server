@@ -8,20 +8,23 @@ datasource db {
 }
 
 model users {
-  id              Int      @id @default(autoincrement())
-  email           String   @unique
-  password        String
-  name            String?
-  role            String   @default("USER")
-  created_at      DateTime @default(now())
-  avatar          String?
-  banner          String?
-  twoFactorSecret String?
-  twoFactorEnabled Boolean @default(false)
-  isBanned        Boolean  @default(false)
-  isDeleted       Boolean  @default(false)
-  gameScores      gameScore[]
-  airhockeyStat   airhockeyStat?
+  id                  Int           @id @default(autoincrement())
+  email               String        @unique
+  password            String
+  name                String?
+  role                String        @default("USER")
+  created_at          DateTime      @default(now())
+  avatar              String?
+  banner              String?
+  twoFactorSecret     String?
+  twoFactorEnabled    Boolean       @default(false)
+  isBanned            Boolean       @default(false)
+  isDeleted           Boolean       @default(false)
+  reset_code          String?
+  reset_code_expires  DateTime?
+  
+  gameScores          gameScore[]
+  airhockeyStat       airhockeyStat?
 }
 
 model gameScore {
