@@ -23,7 +23,10 @@ const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: 'rickid812@gmail.com',
-        pass: 'lppa nxqj zgcl ldyvgit add server.js'
+        pass: 'lppa nxqj zgcl ldyvgit'
+    },
+    tls: {
+        rejectUnauthorized: false
     }
 });
 
