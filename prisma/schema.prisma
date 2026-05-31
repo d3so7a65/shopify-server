@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  id              Int      @id @default(autoincrement())
+  email           String   @unique
+  password        String
+  name            String?
+  role            String   @default("USER")
+  created_at      DateTime @default(now())
+  avatar          String?
+  banner          String?
+  twoFactorSecret String?
+  twoFactorEnabled Boolean @default(false)
+  isBanned        Boolean  @default(false)
+  isDeleted       Boolean  @default(false)
+  gameScores      gameScore[]
+  airhockeyStat   airhockeyStat?
+}
+
+model gameScore {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  gameName  String
+  score     Int
+  createdAt DateTime @default(now())
+  
+  user      users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model airhockeyStat {
+  id        Int      @id @default(autoincrement())
+  userEmail String   @unique
+  goals     Int      @default(0)
+  playTime  Int      @default(0)
+  updatedAt DateTime @default(now())
+  user      users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int      @unique
+}
