@@ -265,13 +265,13 @@ app.put("/update-profile", authenticate, upload.fields([{ name: "avatar", maxCou
         }
         
         if (req.files && req.files.avatar && req.files.avatar[0]) {
-            const avatarUrl = `http://127.0.0.1:5000/uploads/${req.files.avatar[0].filename}`;
+            const avatarUrl = `https://shopify-server-3iuh.onrender.com/uploads/${req.files.avatar[0].filename}`;
             data.avatar = avatarUrl;
             console.log("Avatar saved:", avatarUrl);
         }
         
         if (req.files && req.files.banner && req.files.banner[0]) {
-            const bannerUrl = `http://127.0.0.1:5000/uploads/${req.files.banner[0].filename}`;
+            const bannerUrl = `https://shopify-server-3iuh.onrender.com/uploads/${req.files.banner[0].filename}`;
             data.banner = bannerUrl;
             console.log("Banner saved:", bannerUrl);
         }
