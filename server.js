@@ -217,18 +217,22 @@ app.post('/send-recovery-code', async (req, res) => {
             }
         });
         
-        await transporter.sendMail({
-            from: 'rickid812@gmail.com',
-            to: email,
-            subject: 'Восстановление пароля - Shopify Game',
-            html: `<h2>Ваш код подтверждения: <strong>${code}</strong></h2><p>Код действителен 10 минут.</p>`
-        });
-        
-        res.json({ message: 'Код отправлен', code: code });
+        try {
+            await transporter.sendMail({
+                from: 'rickid812@gmail.com',
+                to: email,
+                subject: 'Восстановление пароля - Shopify Game',
+                html: `<h2>Ваш код подтверждения: <strong>${code}</strong></h2><p>Код действителен 10 минут.</p>`
+            });
+            res.json({ message: 'Код отправлен на почту', code: code });
+        } catch (emailError) {
+            console.error('Ошибка отправки email:', emailError);
+            res.json({ message: 'Код создан (письмо не отправлено)', code: code, debug: true });
+        }
         
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Ошибка сервера' });
+        console.error('Ошибка в send-recovery-code:', error);
+        res.status(500).json({ message: 'Ошибка сервера: ' + error.message });
     }
 });
 
@@ -236,28 +240,41 @@ app.post('/reset-password', async (req, res) => {
     const { email, newPassword } = req.body;
     
     try {
+        const user = await prisma.users.findUnique({
+            where: { email }
+        });
+        
+        if (!user) {
+            return res.status(404).json({ message: 'Пользователь не найден' });
+        }
+        
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         
-        await prisma.$executeRaw`
-            UPDATE users 
-            SET password = ${hashedPassword}, 
-                reset_code = NULL, 
-                reset_code_expires = NULL 
-            WHERE email = ${email}
-        `;
-        
-        await transporter.sendMail({
-            from: 'rickid812@gmail.com',
-            to: email,
-            subject: 'Пароль изменён - Shopify Game',
-            html: `<h2>Ваш пароль успешно изменён!</h2><p>Теперь вы можете войти с новым паролем.</p>`
+        await prisma.users.update({
+            where: { email },
+            data: {
+                password: hashedPassword,
+                reset_code: null,
+                reset_code_expires: null
+            }
         });
+        
+        try {
+            await transporter.sendMail({
+                from: 'rickid812@gmail.com',
+                to: email,
+                subject: 'Пароль изменён - Shopify Game',
+                html: `<h2>Ваш пароль успешно изменён!</h2><p>Теперь вы можете войти с новым паролем.</p>`
+            });
+        } catch (emailError) {
+            console.error('Ошибка отправки email уведомления:', emailError);
+        }
         
         res.json({ message: 'Пароль успешно изменён' });
         
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Ошибка сервера' });
+        console.error('Ошибка в reset-password:', error);
+        res.status(500).json({ message: 'Ошибка сервера: ' + error.message });
     }
 });
 
