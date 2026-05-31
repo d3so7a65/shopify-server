@@ -20,20 +20,11 @@ const JWT_SECRET = process.env.JWT_SECRET || "shopify-game-secret-key-2026";
 const app = express();
 
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    service: 'gmail',
     auth: {
         user: 'rickid812@gmail.com',
-        pass: 'lppa nxqj zgcl ldyv'
-    },
-    tls: {
-        rejectUnauthorized: false,
-        ciphers: 'SSLv3'
-    },
-    socketTimeout: 30000,
-    connectionTimeout: 30000,
-    family: 4
+        pass: 'mlxvdnzxpkiezrrn'
+    }
 });
 
 const storage = multer.diskStorage({
@@ -230,7 +221,7 @@ app.post('/send-recovery-code', async (req, res) => {
         });
         
         if (!user) {
-            return res.status(404).json({ message: 'Пользователь не найден' });
+            return res.status(404).json({ message: 'Пользователь с таким email не найден' });
         }
         
         const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -243,18 +234,29 @@ app.post('/send-recovery-code', async (req, res) => {
             }
         });
         
+        let emailSent = false;
+        let emailError = null;
+        
         try {
-            await transporter.sendMail({
+            const info = await transporter.sendMail({
                 from: 'rickid812@gmail.com',
                 to: email,
                 subject: 'Восстановление пароля - Shopify Game',
                 html: `<h2>Ваш код подтверждения: <strong>${code}</strong></h2><p>Код действителен 10 минут.</p>`
             });
-            res.json({ message: 'Код отправлен на почту', code: code });
-        } catch (emailError) {
-            console.error('Ошибка отправки email:', emailError);
-            res.json({ message: 'Код создан (письмо не отправлено)', code: code, debug: true });
+            emailSent = true;
+            console.log('Email sent:', info.messageId);
+        } catch (emailErr) {
+            emailError = emailErr.message;
+            console.error('Email error:', emailErr);
         }
+        
+        res.json({ 
+            message: emailSent ? 'Код отправлен на вашу почту' : 'Код создан (письмо не отправлено, но вы можете использовать код ниже)',
+            code: code,
+            emailSent: emailSent,
+            debug: !emailSent ? 'Проверьте логи Render для просмотра кода' : undefined
+        });
         
     } catch (error) {
         console.error(error);
