@@ -23,7 +23,7 @@ const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: 'rickid812@gmail.com',
-        pass: 'lppa nxqj zgcl ldyv'
+        pass: 'lppa nxqj zgcl ldyvgit add server.js'
     }
 });
 
@@ -196,15 +196,23 @@ app.post('/send-recovery-code', async (req, res) => {
     const { email } = req.body;
     
     try {
-        const users = await prisma.$queryRaw`SELECT * FROM users WHERE email = ${email}`;
+        const user = await prisma.users.findUnique({
+            where: { email }
+        });
         
-        if (!users || users.length === 0) {
-            return res.status(404).json({ message: 'Пользователь не найден' });
+        if (!user) {
+            return res.status(404).json({ message: 'Пользователь с таким email не найден' });
         }
         
         const code = Math.floor(100000 + Math.random() * 900000).toString();
         
-        await prisma.$executeRaw`UPDATE users SET reset_code = ${code}, reset_code_expires = NOW() + INTERVAL '10 minutes' WHERE email = ${email}`;
+        await prisma.users.update({
+            where: { email },
+            data: {
+                reset_code: code,
+                reset_code_expires: new Date(Date.now() + 10 * 60 * 1000)
+            }
+        });
         
         await transporter.sendMail({
             from: 'rickid812@gmail.com',
