@@ -20,14 +20,20 @@ const JWT_SECRET = process.env.JWT_SECRET || "shopify-game-secret-key-2026";
 const app = express();
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
         user: 'rickid812@gmail.com',
         pass: 'lppa nxqj zgcl ldyv'
     },
     tls: {
-        rejectUnauthorized: false
-    }
+        rejectUnauthorized: false,
+        ciphers: 'SSLv3'
+    },
+    socketTimeout: 30000,
+    connectionTimeout: 30000,
+    family: 4
 });
 
 const storage = multer.diskStorage({
