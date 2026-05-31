@@ -23,7 +23,7 @@ const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: 'rickid812@gmail.com',
-        pass: 'lppa nxqj zgcl ldyvgit'
+        pass: 'lppa nxqj zgcl ldyv'
     },
     tls: {
         rejectUnauthorized: false
@@ -127,13 +127,21 @@ app.post('/register', async (req, res) => {
             }
         });
 
-        const { password: _, ...userWithoutPassword } = user;
-        
         const token = jwt.sign(
             { userId: user.id, email: user.email, name: user.name },
             JWT_SECRET,
             { expiresIn: "7d" }
         );
+        
+        res.cookie("token", token, {
+            httpOnly: false,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            sameSite: "lax",
+            path: "/",
+            secure: false,
+        });
+
+        const { password: _, ...userWithoutPassword } = user;
         
         res.json({ 
             message: "Регистрация успешна", 
@@ -229,10 +237,18 @@ app.post('/send-recovery-code', async (req, res) => {
             }
         });
         
-        // Отключаем отправку email для теста
-        console.log(`🔐 Код для ${email}: ${code}`);
-        
-        res.json({ message: 'Код отправлен (проверьте консоль сервера)', code: code });
+        try {
+            await transporter.sendMail({
+                from: 'rickid812@gmail.com',
+                to: email,
+                subject: 'Восстановление пароля - Shopify Game',
+                html: `<h2>Ваш код подтверждения: <strong>${code}</strong></h2><p>Код действителен 10 минут.</p>`
+            });
+            res.json({ message: 'Код отправлен на почту', code: code });
+        } catch (emailError) {
+            console.error('Ошибка отправки email:', emailError);
+            res.json({ message: 'Код создан (письмо не отправлено)', code: code, debug: true });
+        }
         
     } catch (error) {
         console.error(error);
@@ -263,7 +279,16 @@ app.post('/reset-password', async (req, res) => {
             }
         });
         
-        console.log(`✅ Пароль изменён для: ${email}`);
+        try {
+            await transporter.sendMail({
+                from: 'rickid812@gmail.com',
+                to: email,
+                subject: 'Пароль изменён - Shopify Game',
+                html: `<h2>Ваш пароль успешно изменён!</h2><p>Теперь вы можете войти с новым паролем.</p>`
+            });
+        } catch (emailError) {
+            console.error('Ошибка отправки email уведомления:', emailError);
+        }
         
         res.json({ message: 'Пароль успешно изменён' });
         
